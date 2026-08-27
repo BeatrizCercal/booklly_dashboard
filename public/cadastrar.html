@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booklly - Adicionar Livro</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topo">
+    <div>
+      <a class="logo" href="index.html" aria-label="Booklly - minha biblioteca"><img src="logo.png" alt="Booklly"></a>
+      <h1 id="titulo-pagina">Novo livro</h1>
+    </div>
+    <a href="index.html" class="botao botao-secundario">← Voltar</a>
+  </header>
+
+  <main class="container-form">
+    <form id="form-livro">
+      <input type="hidden" id="livro-id">
+
+      <label for="titulo">Título *</label>
+      <input type="text" id="titulo" name="titulo" required>
+
+      <label for="autor">Autor *</label>
+      <input type="text" id="autor" name="autor" required>
+
+      <label for="genero">Gênero</label>
+      <input type="text" id="genero" name="genero" placeholder="Ex: Romance, Ficção Científica...">
+
+      <label for="capa_url">Capa (URL)</label>
+      <input type="url" id="capa_url" name="capa_url" placeholder="https://...">
+
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="quero_ler">Quero Ler</option>
+        <option value="lendo">Lendo</option>
+        <option value="lido">Lido</option>
+      </select>
+
+      <div id="campos-lido" hidden>
+        <label for="nota">Nota (1 a 5)</label>
+        <input type="number" id="nota" name="nota" min="1" max="5">
+
+        <label for="data_leitura">Data de leitura</label>
+        <input type="date" id="data_leitura" name="data_leitura">
+      </div>
+
+      <button type="submit" class="botao botao-primario">Salvar Livro</button>
+    </form>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

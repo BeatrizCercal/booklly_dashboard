@@ -1,0 +1,27 @@
+{
+  "name": "booklly",
+  "version": "1.0.0",
+  "description": "- **Front-end:** HTML + CSS + JavaScript puro (sem frameworks); - **Back-end:** Node.js + Express; - **Banco de dados:** MySQL.",
+  "main": "db.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BeatrizCercal/booklly.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/BeatrizCercal/booklly/issues"
+  },
+  "homepage": "https://github.com/BeatrizCercal/booklly#readme"
+}

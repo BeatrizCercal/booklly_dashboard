@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booklly | Minha biblioteca</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topo">
+    <div>
+      <a class="logo" href="index.html" aria-label="Booklly - minha biblioteca"><img src="logo.png" alt="Booklly"></a>
+      <h1>Minha biblioteca</h1>
+      <p class="subtitulo">Uma casa para cada história.</p>
+    </div>
+    <div class="topo-acoes">
+      <button id="botao-sair" class="botao botao-secundario" type="button">Sair</button>
+      <a href="cadastrar.html" class="botao botao-primario">+ Novo Livro</a>
+    </div>
+  </header>
+
+  <nav class="filtros">
+    <button class="filtro ativo" data-status="">Todos</button>
+    <button class="filtro" data-status="quero_ler">Quero Ler</button>
+    <button class="filtro" data-status="lendo">Lendo</button>
+    <button class="filtro" data-status="lido">Lidos</button>
+  </nav>
+
+  <main id="lista-livros" class="grid-livros"></main>
+
+  <p id="mensagem-vazio" class="mensagem-vazio" hidden>Nenhum livro encontrado. Que tal cadastrar um?</p>
+
+  <script src="script.js"></script>
+</body>
+</html>

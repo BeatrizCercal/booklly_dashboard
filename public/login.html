@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booklly | Entrar</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="pagina-login">
+  <main class="login-layout">
+    <section class="login-introducao">
+      <a class="logo" href="login.html" aria-label="Booklly - página inicial"><img src="logo.png" alt="Booklly"></a>
+      <h1>Suas leituras,<br><em>no seu ritmo.</em></h1>
+      <p>Organize os livros que vivem na sua estante, na sua bolsa e na sua imaginação.</p>
+    </section>
+    <section class="login-painel" aria-labelledby="titulo-login">
+      <p class="etiqueta">Área pessoal</p>
+      <h2 id="titulo-login">Bem-vinda de volta</h2>
+      <p class="texto-suave">Entre para continuar cuidando da sua biblioteca.</p>
+      <form id="form-login">
+        <label for="usuario">E-mail</label>
+        <input type="email" id="usuario" name="usuario" autocomplete="username" required placeholder="voce@exemplo.com">
+        <label for="senha">Senha</label>
+        <input type="password" id="senha" name="senha" autocomplete="current-password" required placeholder="Sua senha">
+        <p id="mensagem-login" class="mensagem-form" role="alert" hidden></p>
+        <button class="botao botao-primario botao-login" type="submit">Entrar na biblioteca <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="link-cadastro">Ainda não tem uma conta? <a href="criar-conta.html">Criar conta</a></p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
