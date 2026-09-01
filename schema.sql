@@ -20,3 +20,12 @@ CREATE TABLE IF NOT EXISTS livros (
     data_leitura DATE DEFAULT NULL,
     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+USE dashboard_livros;
+
+INSERT INTO usuarios (nome, email, senha_hash)
+VALUES (
+  'Admin',
+  'admin@gmail.com',
+  '123456'
+);
