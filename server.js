@@ -68,8 +68,8 @@ app.post('/api/auth/login', async (req, res) => {
   const senha = req.body.senha || '';
   let autenticado = email === USUARIO_LOGIN.toLowerCase() && senha === SENHA_LOGIN;
   try {
-    const [usuarios] = await pool.query('SELECT email, senha_hash FROM usuarios WHERE email = ?', [email]);
-    if (usuarios.length > 0) autenticado = await verificarSenha(senha, usuarios[0].senha_hash);
+    const resultado = await pool.query('SELECT email, senha_hash FROM usuarios WHERE email = $1', [email]);
+    if (resultado.rows.length > 0) autenticado = await verificarSenha(senha, resultado.rows[0].senha_hash);
   } catch (erro) {
     console.error(erro);
     return res.status(500).json({ erro: 'Erro ao conectar com o banco de dados.' });
@@ -87,10 +87,10 @@ app.post('/api/auth/cadastro', async (req, res) => {
   if (senha.length < 6) return res.status(400).json({ erro: 'A senha deve ter pelo menos 6 caracteres.' });
   try {
     const senhaHash = await criarHashSenha(senha);
-    await pool.query('INSERT INTO usuarios (nome, email, senha_hash) VALUES (?, ?, ?)', [nome, email, senhaHash]);
+    await pool.query('INSERT INTO usuarios (nome, email, senha_hash) VALUES ($1, $2, $3)', [nome, email, senhaHash]);
     res.status(201).json({ mensagem: 'Conta criada com sucesso.' });
   } catch (erro) {
-    if (erro.code === 'ER_DUP_ENTRY') return res.status(409).json({ erro: 'Este e-mail já está cadastrado.' });
+    if (erro.code === '23505') return res.status(409).json({ erro: 'Este e-mail já está cadastrado.' });
     console.error(erro);
     res.status(500).json({ erro: 'Não foi possível criar sua conta.' });
   }
@@ -111,12 +111,12 @@ app.get('/api/livros', exigirSessao, async (req, res) => {
     let query = 'SELECT * FROM livros';
     const params = [];
     if (status) {
-      query += ' WHERE status = ?';
+      query += ' WHERE status = $1';
       params.push(status);
     }
     query += ' ORDER BY data_cadastro DESC';
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    const resultado = await pool.query(query, params);
+    res.json(resultado.rows);
   } catch (erro) {
     console.error(erro);
     res.status(500).json({ erro: 'Erro ao buscar livros' });
@@ -125,9 +125,9 @@ app.get('/api/livros', exigirSessao, async (req, res) => {
 
 app.get('/api/livros/:id', exigirSessao, async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM livros WHERE id = ?', [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
-    res.json(rows[0]);
+    const resultado = await pool.query('SELECT * FROM livros WHERE id = $1', [req.params.id]);
+    if (resultado.rows.length === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
+    res.json(resultado.rows[0]);
   } catch (erro) {
     console.error(erro);
     res.status(500).json({ erro: 'Erro ao buscar livro' });
@@ -138,12 +138,12 @@ app.post('/api/livros', exigirSessao, async (req, res) => {
   try {
     const { titulo, autor, genero, capa_url, status, nota, data_leitura } = req.body;
     if (!titulo || !autor) return res.status(400).json({ erro: 'Título e autor são obrigatórios' });
-    const [resultado] = await pool.query(
+    const resultado = await pool.query(
       `INSERT INTO livros (titulo, autor, genero, capa_url, status, nota, data_leitura)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
       [titulo, autor, genero || null, capa_url || null, status || 'quero_ler', nota || null, data_leitura || null]
     );
-    res.status(201).json({ id: resultado.insertId, mensagem: 'Livro criado com sucesso' });
+    res.status(201).json({ id: resultado.rows[0].id, mensagem: 'Livro criado com sucesso' });
   } catch (erro) {
     console.error(erro);
     res.status(500).json({ erro: 'Erro ao criar livro' });
@@ -153,11 +153,11 @@ app.post('/api/livros', exigirSessao, async (req, res) => {
 app.put('/api/livros/:id', exigirSessao, async (req, res) => {
   try {
     const { titulo, autor, genero, capa_url, status, nota, data_leitura } = req.body;
-    const [resultado] = await pool.query(
-      'UPDATE livros SET titulo = ?, autor = ?, genero = ?, capa_url = ?, status = ?, nota = ?, data_leitura = ? WHERE id = ?',
+    const resultado = await pool.query(
+      'UPDATE livros SET titulo = $1, autor = $2, genero = $3, capa_url = $4, status = $5, nota = $6, data_leitura = $7 WHERE id = $8',
       [titulo, autor, genero || null, capa_url || null, status, nota || null, data_leitura || null, req.params.id]
     );
-    if (resultado.affectedRows === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
+    if (resultado.rowCount === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
     res.json({ mensagem: 'Livro atualizado com sucesso' });
   } catch (erro) {
     console.error(erro);
@@ -167,8 +167,8 @@ app.put('/api/livros/:id', exigirSessao, async (req, res) => {
 
 app.delete('/api/livros/:id', exigirSessao, async (req, res) => {
   try {
-    const [resultado] = await pool.query('DELETE FROM livros WHERE id = ?', [req.params.id]);
-    if (resultado.affectedRows === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
+    const resultado = await pool.query('DELETE FROM livros WHERE id = $1', [req.params.id]);
+    if (resultado.rowCount === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
     res.json({ mensagem: 'Livro removido com sucesso' });
   } catch (erro) {
     console.error(erro);
