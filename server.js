@@ -107,7 +107,8 @@ app.post('/api/auth/cadastro', async (req, res) => {
 
 app.get('/api/auth/me', (req, res) => {
   const sessao = lerSessao(req);
-  res.status(sessao ? 200 : 401).json({ autenticado: !!sessao });
+  const autenticado = !!(sessao && sessao.id);
+  res.status(autenticado ? 200 : 401).json({ autenticado });
 });
 
 app.post('/api/auth/logout', (req, res) => {
