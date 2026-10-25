@@ -12,7 +12,7 @@
     <div>
       <a class="logo" href="index.html" aria-label="Booklly - minha biblioteca"><img src="/logo.png" alt="Booklly"></a>
       <h1>Minha biblioteca</h1>
-      <p class="subtitulo">Uma área  para cada história.</p>
+      <p class="subtitulo">Uma área para cada história.</p>
     </div>
     <div class="topo-acoes">
       <button id="botao-sair" class="botao botao-secundario" type="button">Sair</button>
@@ -20,16 +20,39 @@
     </div>
   </header>
 
-  <nav class="filtros">
-    <button class="filtro ativo" data-status="">Todos</button>
-    <button class="filtro" data-status="quero_ler">Quero Ler</button>
-    <button class="filtro" data-status="lendo">Lendo</button>
-    <button class="filtro" data-status="lido">Lidos</button>
+  <section id="painel" class="painel" aria-label="Resumo da biblioteca">
+    <div class="painel-item">
+      <span class="painel-numero" id="total-livros">–</span>
+      <span class="painel-rotulo">Livros</span>
+    </div>
+    <div class="painel-item">
+      <span class="painel-numero" id="total-lidos">–</span>
+      <span class="painel-rotulo">Lidos</span>
+    </div>
+    <div class="painel-item">
+      <span class="painel-numero" id="total-lendo">–</span>
+      <span class="painel-rotulo">Lendo</span>
+    </div>
+    <div class="painel-item">
+      <span class="painel-numero" id="media-notas">–</span>
+      <span class="painel-rotulo">Nota média</span>
+    </div>
+  </section>
+
+  <div class="barra-busca">
+    <input type="search" id="busca" placeholder="Buscar por título ou autor..." aria-label="Buscar por título ou autor">
+  </div>
+
+  <nav class="filtros" aria-label="Filtrar por status">
+    <button type="button" class="filtro ativo" data-status="" aria-pressed="true">Todos</button>
+    <button type="button" class="filtro" data-status="quero_ler" aria-pressed="false">Quero Ler</button>
+    <button type="button" class="filtro" data-status="lendo" aria-pressed="false">Lendo</button>
+    <button type="button" class="filtro" data-status="lido" aria-pressed="false">Lidos</button>
   </nav>
 
   <main id="lista-livros" class="grid-livros"></main>
 
-  <p id="mensagem-vazio" class="mensagem-vazio" hidden>Nenhum livro encontrado. Que tal cadastrar um?</p>
+  <p id="mensagem-vazio" class="mensagem-vazio" hidden></p>
 
   <script src="script.js"></script>
 </body>

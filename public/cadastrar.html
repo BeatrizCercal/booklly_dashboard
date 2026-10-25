@@ -26,11 +26,15 @@
       <label for="autor">Autor *</label>
       <input type="text" id="autor" name="autor" required>
 
+      <button type="button" id="botao-buscar-livro" class="botao botao-secundario botao-pequeno botao-buscar">Buscar capa e dados</button>
+      <div id="resultados-busca" class="resultados-busca" hidden></div>
+
       <label for="genero">Gênero</label>
       <input type="text" id="genero" name="genero" placeholder="Ex: Romance, Ficção Científica...">
 
       <label for="capa_url">Capa (URL)</label>
       <input type="url" id="capa_url" name="capa_url" placeholder="https://...">
+      <img id="preview-capa" class="preview-capa" alt="Prévia da capa" hidden>
 
       <label for="status">Status</label>
       <select id="status" name="status">
@@ -40,12 +44,21 @@
       </select>
 
       <div id="campos-lido" hidden>
-        <label for="nota">Nota (1 a 5)</label>
-        <input type="number" id="nota" name="nota" min="1" max="5">
+        <span class="rotulo" id="rotulo-nota">Nota</span>
+        <input type="hidden" id="nota" name="nota">
+        <div class="estrelas" role="group" aria-labelledby="rotulo-nota">
+          <button type="button" class="estrela" data-valor="1" aria-label="1 estrela" aria-pressed="false">★</button>
+          <button type="button" class="estrela" data-valor="2" aria-label="2 estrelas" aria-pressed="false">★</button>
+          <button type="button" class="estrela" data-valor="3" aria-label="3 estrelas" aria-pressed="false">★</button>
+          <button type="button" class="estrela" data-valor="4" aria-label="4 estrelas" aria-pressed="false">★</button>
+          <button type="button" class="estrela" data-valor="5" aria-label="5 estrelas" aria-pressed="false">★</button>
+        </div>
 
         <label for="data_leitura">Data de leitura</label>
         <input type="date" id="data_leitura" name="data_leitura">
       </div>
+
+      <p id="mensagem-livro" class="mensagem-form" role="alert" hidden></p>
 
       <button type="submit" class="botao botao-primario">Salvar Livro</button>
     </form>
