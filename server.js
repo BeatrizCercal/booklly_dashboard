@@ -6,8 +6,6 @@ const pool = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const USUARIO_LOGIN = process.env.LOGIN_USER || 'admin@booklly.com';
-const SENHA_LOGIN = process.env.LOGIN_PASSWORD || 'booklly2026';
 const SEGREDO_SESSAO = process.env.SESSION_SECRET || 'booklly-segredo-local';
 
 function criarHashSenha(senha) {
@@ -33,30 +31,40 @@ function verificarSenha(senha, senhaArmazenada) {
 }
 
 function criarTokenSessao(usuario) {
-  const dados = Buffer.from(JSON.stringify({ usuario, expira: Date.now() + 8 * 60 * 60 * 1000 })).toString('base64url');
+  const dados = Buffer.from(JSON.stringify({
+    id: usuario.id,
+    email: usuario.email,
+    expira: Date.now() + 8 * 60 * 60 * 1000
+  })).toString('base64url');
   const assinatura = crypto.createHmac('sha256', SEGREDO_SESSAO).update(dados).digest('base64url');
   return `${dados}.${assinatura}`;
 }
 
-function sessaoValida(req) {
+function lerSessao(req) {
   const cookies = (req.headers.cookie || '').split(';').reduce((resultado, item) => {
     const [chave, ...valor] = item.trim().split('=');
     if (chave) resultado[chave] = valor.join('=');
     return resultado;
   }, {});
   const [dados, assinatura] = (cookies.booklly_sessao || '').split('.');
-  if (!dados || !assinatura) return false;
+  if (!dados || !assinatura) return null;
   const assinaturaEsperada = crypto.createHmac('sha256', SEGREDO_SESSAO).update(dados).digest('base64url');
-  if (assinatura.length !== assinaturaEsperada.length || !crypto.timingSafeEqual(Buffer.from(assinatura), Buffer.from(assinaturaEsperada))) return false;
+  if (assinatura.length !== assinaturaEsperada.length ||
+      !crypto.timingSafeEqual(Buffer.from(assinatura), Buffer.from(assinaturaEsperada))) return null;
   try {
-    return JSON.parse(Buffer.from(dados, 'base64url').toString()).expira > Date.now();
+    const sessao = JSON.parse(Buffer.from(dados, 'base64url').toString());
+    return sessao.expira > Date.now() ? sessao : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 function exigirSessao(req, res, next) {
-  if (sessaoValida(req)) return next();
+  const sessao = lerSessao(req);
+  if (sessao && sessao.id) {
+    req.usuarioId = sessao.id;
+    return next();
+  }
   res.status(401).json({ erro: 'Sessão expirada. Faça login novamente.' });
 }
 
@@ -66,17 +74,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/auth/login', async (req, res) => {
   const email = (req.body.usuario || '').trim().toLowerCase();
   const senha = req.body.senha || '';
-  let autenticado = email === USUARIO_LOGIN.toLowerCase() && senha === SENHA_LOGIN;
   try {
-    const resultado = await pool.query('SELECT email, senha_hash FROM usuarios WHERE email = $1', [email]);
-    if (resultado.rows.length > 0) autenticado = await verificarSenha(senha, resultado.rows[0].senha_hash);
+    const resultado = await pool.query('SELECT id, email, senha_hash FROM usuarios WHERE email = $1', [email]);
+    const usuario = resultado.rows[0];
+    if (!usuario || !(await verificarSenha(senha, usuario.senha_hash))) {
+      return res.status(401).json({ erro: 'Usuário ou senha inválidos.' });
+    }
+    res.setHeader('Set-Cookie', `booklly_sessao=${criarTokenSessao(usuario)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800`);
+    res.json({ usuario: usuario.email });
   } catch (erro) {
     console.error(erro);
-    return res.status(500).json({ erro: 'Erro ao conectar com o banco de dados.' });
+    res.status(500).json({ erro: 'Erro ao conectar com o banco de dados.' });
   }
-  if (!autenticado) return res.status(401).json({ erro: 'Usuário ou senha inválidos.' });
-  res.setHeader('Set-Cookie', `booklly_sessao=${criarTokenSessao(email)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800`);
-  res.json({ usuario: email });
 });
 
 app.post('/api/auth/cadastro', async (req, res) => {
@@ -97,7 +106,8 @@ app.post('/api/auth/cadastro', async (req, res) => {
 });
 
 app.get('/api/auth/me', (req, res) => {
-  res.status(sessaoValida(req) ? 200 : 401).json({ autenticado: sessaoValida(req) });
+  const sessao = lerSessao(req);
+  res.status(sessao ? 200 : 401).json({ autenticado: !!sessao });
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -108,10 +118,10 @@ app.post('/api/auth/logout', (req, res) => {
 app.get('/api/livros', exigirSessao, async (req, res) => {
   try {
     const { status } = req.query;
-    let query = 'SELECT * FROM livros';
-    const params = [];
+    let query = 'SELECT * FROM livros WHERE usuario_id = $1';
+    const params = [req.usuarioId];
     if (status) {
-      query += ' WHERE status = $1';
+      query += ' AND status = $2';
       params.push(status);
     }
     query += ' ORDER BY data_cadastro DESC';
@@ -125,7 +135,10 @@ app.get('/api/livros', exigirSessao, async (req, res) => {
 
 app.get('/api/livros/:id', exigirSessao, async (req, res) => {
   try {
-    const resultado = await pool.query('SELECT * FROM livros WHERE id = $1', [req.params.id]);
+    const resultado = await pool.query(
+      'SELECT * FROM livros WHERE id = $1 AND usuario_id = $2',
+      [req.params.id, req.usuarioId]
+    );
     if (resultado.rows.length === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
     res.json(resultado.rows[0]);
   } catch (erro) {
@@ -139,9 +152,9 @@ app.post('/api/livros', exigirSessao, async (req, res) => {
     const { titulo, autor, genero, capa_url, status, nota, data_leitura } = req.body;
     if (!titulo || !autor) return res.status(400).json({ erro: 'Título e autor são obrigatórios' });
     const resultado = await pool.query(
-      `INSERT INTO livros (titulo, autor, genero, capa_url, status, nota, data_leitura)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [titulo, autor, genero || null, capa_url || null, status || 'quero_ler', nota || null, data_leitura || null]
+      `INSERT INTO livros (titulo, autor, genero, capa_url, status, nota, data_leitura, usuario_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      [titulo, autor, genero || null, capa_url || null, status || 'quero_ler', nota || null, data_leitura || null, req.usuarioId]
     );
     res.status(201).json({ id: resultado.rows[0].id, mensagem: 'Livro criado com sucesso' });
   } catch (erro) {
@@ -154,8 +167,9 @@ app.put('/api/livros/:id', exigirSessao, async (req, res) => {
   try {
     const { titulo, autor, genero, capa_url, status, nota, data_leitura } = req.body;
     const resultado = await pool.query(
-      'UPDATE livros SET titulo = $1, autor = $2, genero = $3, capa_url = $4, status = $5, nota = $6, data_leitura = $7 WHERE id = $8',
-      [titulo, autor, genero || null, capa_url || null, status, nota || null, data_leitura || null, req.params.id]
+      `UPDATE livros SET titulo = $1, autor = $2, genero = $3, capa_url = $4, status = $5, nota = $6, data_leitura = $7
+       WHERE id = $8 AND usuario_id = $9`,
+      [titulo, autor, genero || null, capa_url || null, status, nota || null, data_leitura || null, req.params.id, req.usuarioId]
     );
     if (resultado.rowCount === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
     res.json({ mensagem: 'Livro atualizado com sucesso' });
@@ -167,7 +181,10 @@ app.put('/api/livros/:id', exigirSessao, async (req, res) => {
 
 app.delete('/api/livros/:id', exigirSessao, async (req, res) => {
   try {
-    const resultado = await pool.query('DELETE FROM livros WHERE id = $1', [req.params.id]);
+    const resultado = await pool.query(
+      'DELETE FROM livros WHERE id = $1 AND usuario_id = $2',
+      [req.params.id, req.usuarioId]
+    );
     if (resultado.rowCount === 0) return res.status(404).json({ erro: 'Livro não encontrado' });
     res.json({ mensagem: 'Livro removido com sucesso' });
   } catch (erro) {
